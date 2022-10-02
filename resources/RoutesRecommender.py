@@ -15,6 +15,8 @@ class RoutesRecommender(Resource):
         departure_time = datetime.now(timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
 
+        # TODO Input validation
+
         if origin_lat is None or origin_lng is None or dest_lat is None or dest_lng is None:
             return {"Message": "Please indicate start and end coordinates"}, 400
 
@@ -42,9 +44,12 @@ class RoutesRecommender(Resource):
         # TODO Set SQL trigger to filter routes by priority type
 
         # TODO Get filtered planned routes from DB
+        # Filter conditions:
+        # - Maximum of 15 minute minute delay between passenger journey start and driver drive start
+        # - Maximum of 10 minute walking time from passenger start to driver start
+        
         results = []
 
-        print(results)
         return {"Message": "Sorry there are no available drivers for your journey at the specified time"}, 404
 
         return {"Recommended Driver Routes": results}, 200

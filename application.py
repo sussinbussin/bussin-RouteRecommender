@@ -18,8 +18,6 @@ def create_app(config_filename):
 
 application = app = create_app("config")
 
-# Connection to MySQL Database
-
 
 @application.route('/v1', methods=['GET'])
 @application.route('/', methods=['GET'])
