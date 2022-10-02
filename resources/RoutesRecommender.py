@@ -48,6 +48,14 @@ class RoutesRecommender(Resource):
         # - Maximum of 15 minute minute delay between passenger journey start and driver drive start
         # - Maximum of 10 minute walking time from passenger start to driver start
         
+        # TODO Call Routes API to get actual arrival time (departure + travel time) and rank based on that
+        # Calls:
+        # - Walking (A to B)
+        # - Driving (B to C)
+        # - Walking (C to D)
+
+        # TODO Rank routes based on Arrival Time
+
         results = []
 
         return {"Message": "Sorry there are no available drivers for your journey at the specified time"}, 404
