@@ -3,6 +3,7 @@ from flask import request
 # from application import mysql
 from datetime import datetime
 from pytz import timezone
+from geopy.geocoders import Nominatim
 
 class RoutesRecommender(Resource):
 
@@ -40,7 +41,12 @@ class RoutesRecommender(Resource):
         # }
         
         # TODO Check if coordinates are valid, i.e. in Singapore
-
+        geolocator = Nominatim(user_agent="RoutesRecommender")
+        originlocation = geolocator.reverse(str(origin_lat)+","+str(origin_lng))
+        destlocation = geolocator.reverse(str(dest_lat)+","+str(dest_lng))
+        if originlocation.raw['address'].get('country', '') != "Singapore" or destlocation.raw['address'].get('country', '') != "Singapore":
+            return {"Message": "Please enter coordinates within Singapore"}, 400
+            
         # TODO Set SQL trigger to filter routes by priority type
 
         # TODO Get filtered planned routes from DB
