@@ -12,6 +12,13 @@ def create_app(config_filename):
     from api_links import api_bp
     application.register_blueprint(api_bp, url_prefix='/v1')
 
+    application.config["pymysql_kwargs"] = {
+        'host': application.config["HOST"],
+        'user': application.config["USER"],
+        'password': application.config["PASSWORD"],
+        'database': application.config["DATABASE"],
+    }
+
     mysql = MySQL(app)
 
     return application
