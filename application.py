@@ -12,7 +12,13 @@ def create_app(config_filename):
     from api_links import api_bp
     application.register_blueprint(api_bp, url_prefix='/v1')
 
-    mysql.init_app(application)
+    pymysql_connect_kwargs = {'user': 'root',
+                          'password': 'Matcha8$',
+                          'host': '127.0.0.1',
+                          'database': 'gas_prices'}
+
+    app.config['pymysql_kwargs'] = pymysql_connect_kwargs
+    mysql = MySQL(app)
 
     return application
 
