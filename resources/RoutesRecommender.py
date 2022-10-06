@@ -18,8 +18,8 @@ class RoutesRecommender(Resource):
         origin_lng = request_data.get("Origin Longitude")
         dest_lat = request_data.get("Destination Latitude")
         dest_lng = request_data.get("Destination Longitude") 
-        # departure_time = datetime.now(timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else request_data["Departure Time"]
-        departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
+        departure_time = datetime.datetime.now(timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else datetime.datetime.strptime(request_data["Departure Time"], '%Y/%m/%d %H:%M:%S')
+        #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
 
         if origin_lat is None or origin_lng is None or dest_lat is None or dest_lng is None:
@@ -44,17 +44,17 @@ class RoutesRecommender(Resource):
         # Approximate error between Pythagoras and Havers
         # https://gis.stackexchange.com/questions/58653/what-is-approximate-error-of-pythagorean-theorem-vs-haversine-formula-in-measur
 
-        datetime_plus15 = datetime.datetime.strptime(departure_time.replace("-", "/"), '%Y/%d/%m').date() + datetime.timedelta(minutes=15)
+        #datetime_plus15 = datetime.datetime.strptime(departure_time.replace("-", "/"), '%Y/%d/%m').date() + datetime.timedelta(minutes=15)
+        datetime_plus15 = departure_time + datetime.timedelta(minutes=15)
 
         cursor = mysql.connection.cursor()
         sql_statement = '''SELECT * FROM plannedRoute WHERE dateTime BETWEEN %s AND %s AND
                             SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) <= 0.066569613598277
                             ORDER BY (SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) 
                             + SQRT(POW((destLatitude-%s),2) + POW((destLongitude-%s),2))) LIMIT 5'''
-        cursor.execute(sql_statement, (departure_time, datetime_plus15.strftime('%Y-%d-%m'), origin_lat, origin_lng, origin_lat, origin_lng, dest_lat, dest_lng))
+        cursor.execute(sql_statement, (str(departure_time).split(".")[0], str(datetime_plus15.strftime('%Y/%m/%d %H:%M:%S')).split(".")[0], origin_lat, origin_lng, origin_lat, origin_lng, dest_lat, dest_lng))
         routes = cursor.fetchall()
 
-        
         # TODO Call Routes API to get actual arrival time (departure + travel time) and rank based on that
         # Calls:
         # - Driving (B to C)
