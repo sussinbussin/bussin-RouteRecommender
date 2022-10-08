@@ -48,7 +48,7 @@ class RoutesRecommender(Resource):
         datetime_plus15 = departure_time + datetime.timedelta(minutes=15)
 
         cursor = mysql.connection.cursor()
-        sql_statement = '''SELECT * FROM plannedRoute WHERE dateTime BETWEEN %s AND %s AND
+        sql_statement = '''SELECT * FROM planned_route WHERE dateTime BETWEEN %s AND %s AND
                             SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) <= 0.066569613598277
                             ORDER BY (SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) 
                             + SQRT(POW((destLatitude-%s),2) + POW((destLongitude-%s),2))) LIMIT 5'''
