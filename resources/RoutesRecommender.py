@@ -5,7 +5,7 @@ from flask import request
 import datetime
 from pytz import timezone
 from geopy.geocoders import Nominatim
-from application import mysql
+from app import mysql
 import json
 
 class RoutesRecommender(Resource):
