@@ -9,8 +9,6 @@ from application import mysql
 import googlemaps
 import math
 
-from config import ROUTES_API_KEY
-
 class RoutesRecommender(Resource):
 
     def post(self):
