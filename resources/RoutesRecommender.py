@@ -1,4 +1,3 @@
-from cmath import sqrt
 from config import ROUTES_API_KEY
 from flask_restful import Resource
 from flask import request
@@ -7,7 +6,6 @@ import datetime
 from pytz import timezone
 from geopy.geocoders import Nominatim
 from application import mysql
-import json
 import googlemaps
 import math
 
