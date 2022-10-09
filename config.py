@@ -14,6 +14,6 @@ DATABASE = os.environ["DATABASE"]
 
 # USER = 'root'
 # # Please fill in your password
-# PASSWORD = 'Matcha8$'
+# PASSWORD = ''
 # HOST = '127.0.0.1'
 # DATABASE = 'bussin'

@@ -97,7 +97,7 @@ class RoutesRecommender(Resource):
         result = json.dumps(results, indent=2)
 
         if len(results) == 0:
-            return {"Message": "Sorry there are no available drivers for your journey at the specified time"}, 404
+            return {"Message": "Sorry there are no available drivers for your journey at the specified time"}, 200
         else:
             return {"Recommended Driver Routes": results}, 200
 
