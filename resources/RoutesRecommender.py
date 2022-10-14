@@ -11,6 +11,23 @@ import math
 
 class RoutesRecommender(Resource):
 
+    def validate_input(origin_lat, origin_lng, dest_lat, dest_lng):
+        if origin_lat is None or origin_lng is None or dest_lat is None or dest_lng is None:
+            return "Please indicate start and end coordinates"
+        elif not isinstance(origin_lat, float) or not isinstance(origin_lng, float) or not isinstance(dest_lat, float) or not isinstance(dest_lng, float):
+            return "Please input proper coordinates"
+        elif abs(origin_lat) > 90 or abs(origin_lng) > 180 or abs(dest_lat) > 90 or abs(dest_lng) > 180:
+            return "Please input proper coordinates"
+
+        # Checking if coordinates are within Singapore
+        geolocator = Nominatim(user_agent="RoutesRecommender")
+        originlocation = geolocator.reverse(str(origin_lat)+","+str(origin_lng))
+        destlocation = geolocator.reverse(str(dest_lat)+","+str(dest_lng))
+        if originlocation.raw['address'].get('country', '') != "Singapore" or destlocation.raw['address'].get('country', '') != "Singapore":
+            return "Please enter coordinates within Singapore"
+        
+        return "Ok"
+
     def post(self):
 
         # Input Validation
@@ -23,19 +40,8 @@ class RoutesRecommender(Resource):
         #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
 
-        if origin_lat is None or origin_lng is None or dest_lat is None or dest_lng is None:
-            return {"Message": "Please indicate start and end coordinates"}, 400
-        elif not isinstance(origin_lat, float) or not isinstance(origin_lng, float) or not isinstance(dest_lat, float) or not isinstance(dest_lng, float):
-            return {"Message": "Please input proper coordinates"}, 400
-        elif abs(origin_lat) > 90 or abs(origin_lng) > 180 or abs(dest_lat) > 90 or abs(dest_lng) > 180:
-            return {"Message": "Please input proper coordinates"}, 400
-
-        # Checking if coordinates are within Singapore
-        geolocator = Nominatim(user_agent="RoutesRecommender")
-        originlocation = geolocator.reverse(str(origin_lat)+","+str(origin_lng))
-        destlocation = geolocator.reverse(str(dest_lat)+","+str(dest_lng))
-        if originlocation.raw['address'].get('country', '') != "Singapore" or destlocation.raw['address'].get('country', '') != "Singapore":
-            return {"Message": "Please enter coordinates within Singapore"}, 400
+        if validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
+            return {"Message": validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
 
         # Get filtered planned routes from DB
         # Filter conditions:
