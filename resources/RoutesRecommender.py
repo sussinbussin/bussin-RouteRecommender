@@ -36,7 +36,7 @@ class RoutesRecommender(Resource):
         cursor.execute(sql_statement)
         gas_prices = cursor.fetchall()
 
-        {
+        prices = {
             "92": gas_prices[0][1],
             "95": gas_prices[1][1],
             "98": gas_prices[2][1],
@@ -47,7 +47,7 @@ class RoutesRecommender(Resource):
         average_fuel_consumption_per_litre = 15.4
 
         for i in range(len(distance)):
-            costs.append(distance[i] / average_fuel_consumption_per_litre * gas_prices[gas_type[i]])
+            costs.append(distance[i] / average_fuel_consumption_per_litre * prices[gas_type[i]])
 
         return costs
 
