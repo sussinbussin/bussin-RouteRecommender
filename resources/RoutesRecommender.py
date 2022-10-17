@@ -47,7 +47,7 @@ class RoutesRecommender(Resource):
         average_fuel_consumption_per_litre = 15.4
 
         for i in range(len(distance)):
-            costs.append(distance[i] / average_fuel_consumption_per_litre * prices[gas_type[i]])
+            costs.append(distance[i] / average_fuel_consumption_per_litre * float(prices[gas_type[i]]))
 
         return costs
 
