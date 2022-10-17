@@ -138,7 +138,7 @@ class RoutesRecommender(Resource):
                 'capacity': routes[i][6],
                 'carPlate': routes[i][7],
                 'carModel': routes[i][9],
-                'driver': routes[i][13],
+                'driver': routes[i][11],
                 'duration': travel_time[i],
                 'cost': cost[i]
             })
