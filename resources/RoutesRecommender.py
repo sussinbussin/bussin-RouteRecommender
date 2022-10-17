@@ -72,14 +72,13 @@ class RoutesRecommender(Resource):
         datetime_plus15 = departure_time + datetime.timedelta(minutes=15)
 
         cursor = mysql.connection.cursor()
-        sql_statement = '''SELECT temp2.*, bussinuser.name FROM (SELECT temp.*, driver.fuel_type, driver.model_and_color, driver.id as driver_id FROM (
-                            SELECT * FROM (
-                            SELECT * FROM planned_route WHERE
+
+        sql_statement = '''SELECT temp2.*, bussinuser.name FROM (SELECT temp.*, driver.fuel_type, driver.model_and_color, driver.id as driver_id FROM (SELECT * FROM planned_route WHERE
                             SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) <= 0.066569613598277
                             ORDER BY (SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) 
-                            + SQRT(POW((destLatitude-%s),2) + POW((destLongitude-%s),2))) LIMIT 5
-                            ) temp, driver WHERE temp.car_plate = driver.car_plate
-                            ) temp2 JOIN bussinuser ON temp2.driver_id = bussinuser.id'''
+                            + SQRT(POW((destLatitude-%s),2) + POW((destLongitude-%s),2))) LIMIT 5) temp 
+                            JOIN driver ON temp.car_plate = driver.car_plate) temp2
+                            JOIN bussinuser ON temp2.driver_id = bussinuser.id'''
         # sql_statement = '''SELECT * FROM planned_route WHERE dateTime BETWEEN %s AND %s AND
         #                     SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) <= 0.066569613598277
         #                     ORDER BY (SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) 
