@@ -11,7 +11,7 @@ import math
 
 class RoutesRecommender(Resource):
 
-    def validate_input(origin_lat, origin_lng, dest_lat, dest_lng):
+    def validate_input(self, origin_lat, origin_lng, dest_lat, dest_lng):
         if origin_lat is None or origin_lng is None or dest_lat is None or dest_lng is None:
             return "Please indicate start and end coordinates"
         elif not isinstance(origin_lat, float) or not isinstance(origin_lng, float) or not isinstance(dest_lat, float) or not isinstance(dest_lng, float):
@@ -54,6 +54,8 @@ class RoutesRecommender(Resource):
         departure_time = datetime.datetime.now(timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else datetime.datetime.strptime(request_data["Departure Time"], '%Y/%m/%d %H:%M:%S')
         #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
+
+        print([origin_lat, origin_lng, dest_lat, dest_lng])
 
         if self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
             return {"Message": self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
