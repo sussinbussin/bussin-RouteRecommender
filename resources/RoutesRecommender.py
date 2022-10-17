@@ -115,7 +115,7 @@ class RoutesRecommender(Resource):
         # Rank routes based on Arrival Time
 
         travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["duration"]["text"].replace(" mins", "")) + math.ceil(1482.59902 * math.sqrt((float(x[3]) - dest_lat) ** 2 + (float(x[4]) - dest_lng) ** 2)), routes))
-        distance = travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["distance"]["text"].replace(" km", "")), routes))
+        distance = travel_time = list(map(lambda x: float(timed_result[routes.index(x)]["distance"]["text"].replace(" km", "")), routes))
         cost = self.find_ride_price(distance, [routes[i][8] for i in range(len(routes))])
 
         results = []
