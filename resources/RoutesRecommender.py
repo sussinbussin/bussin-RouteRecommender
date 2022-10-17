@@ -32,7 +32,7 @@ class RoutesRecommender(Resource):
 
         costs = []
         cursor = mysql.connection.cursor()
-        sql_statement = '''select type, max(price) from (select * from gas_price order by create_date desc limit 25) temp group by type'''
+        sql_statement = '''select type, max(price) from (select * from gas_price order by date_time desc limit 25) temp group by type'''
         cursor.execute(sql_statement)
         gas_prices = cursor.fetchall()
 
