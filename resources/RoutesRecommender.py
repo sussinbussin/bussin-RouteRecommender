@@ -55,8 +55,8 @@ class RoutesRecommender(Resource):
         #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
 
-        if validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
-            return {"Message": validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
+        if self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
+            return {"Message": self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
 
         # Get filtered planned routes from DB
         # Filter conditions:
@@ -115,7 +115,7 @@ class RoutesRecommender(Resource):
 
         travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["duration"]["text"].replace(" mins", "")) + math.ceil(1482.59902 * math.sqrt((float(x[3]) - dest_lat) ** 2 + (float(x[4]) - dest_lng) ** 2)), routes))
         distance = travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["distance"]["text"].replace(" km", "")), routes))
-        cost = find_ride_price(distance, [routes[i][8] for i in range(len(routes))])
+        cost = self.find_ride_price(distance, [routes[i][8] for i in range(len(routes))])
 
         results = []
         for i in range(len(routes)):
