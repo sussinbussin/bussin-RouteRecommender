@@ -32,14 +32,22 @@ class RoutesRecommender(Resource):
 
         costs = []
         cursor = mysql.connection.cursor()
-        sql_statement = '''select type, max(price) from (select * from gas_price order by date_time desc limit 25) temp group by type'''
+        sql_statement = '''select gas_type, max(price) from (select * from gas_price order by date_time desc limit 25) temp group by gas_type order by gas_type'''
         cursor.execute(sql_statement)
         gas_prices = cursor.fetchall()
+
+        {
+            "92": gas_prices[0][1],
+            "95": gas_prices[1][1],
+            "98": gas_prices[2][1],
+            "Diesel": gas_prices[3][1],
+            "Premium": gas_prices[4][1]
+        }
 
         average_fuel_consumption_per_litre = 15.4
 
         for i in range(len(distance)):
-            costs.append(distance[i] / average_fuel_consumption_per_litre * gas_type[i])
+            costs.append(distance[i] / average_fuel_consumption_per_litre * gas_prices[gas_type[i]])
 
         return costs
 
