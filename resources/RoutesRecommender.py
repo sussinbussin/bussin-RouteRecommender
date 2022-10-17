@@ -28,7 +28,7 @@ class RoutesRecommender(Resource):
         
         return "Ok"
 
-    def find_ride_price(distance, gas_type):
+    def find_ride_price(self, distance, gas_type):
 
         costs = []
         cursor = mysql.connection.cursor()
