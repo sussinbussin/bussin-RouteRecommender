@@ -1,4 +1,3 @@
-from asyncio import transports
 from config import ROUTES_API_KEY, CITYMAPPER_API_KEY
 from flask_restful import Resource
 from flask import request
