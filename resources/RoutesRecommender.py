@@ -1,4 +1,4 @@
-from config import ROUTES_API_KEY
+from config import ROUTES_API_KEY, CITYMAPPER_API_KEY
 from flask_restful import Resource
 from flask import request
 # from datetime import datetime
@@ -8,6 +8,7 @@ from geopy.geocoders import Nominatim
 from application import mysql
 import googlemaps
 import math
+import requests
 
 class RoutesRecommender(Resource):
 
@@ -51,6 +52,75 @@ class RoutesRecommender(Resource):
 
         return costs
 
+    def find_public_transport_routes(self, origin_lat, origin_lng, dest_lat, dest_lng):
+        base_url = "https://api.external.citymapper.com/api/1/directions/transit"
+        payload = {
+            "start": str(origin_lat)+","+str(origin_lng), 
+            "end":str(dest_lat)+","+str(dest_lng)
+        }
+        headers = {
+            "Citymapper-Partner-Key": CITYMAPPER_API_KEY
+        }
+        routes = requests.get(base_url, params=payload, headers=headers).json()["routes"]
+
+        formatted_routes = []
+
+        for route in routes:
+            current_route = {
+                "route": [],
+                "duration": math.ceil(route["duration_seconds"] / 60),
+                "cost": route["price"]["amount"]
+            }
+            for leg in route["legs"]:
+                transport_mode = {}
+                if leg["travel_mode"] == "walk":
+                    transport_mode["transportMode"] = "walking"
+                    # Case 1: Origin and Dest
+                    if len(route["legs"]) == 1:
+                        transport_mode["originLatitude"] = route["start"]["coordinates"]["lat"]
+                        transport_mode["originLongitude"] = route["start"]["coordinates"]["lon"]
+                        transport_mode["destLatitude"] = route["end"]["coordinates"]["lat"]
+                        transport_mode["destLongitude"] = route["end"]["coordinates"]["lon"]
+                    # Case 2: Origin
+                    elif route["legs"].index(leg) == 0:
+                        transport_mode["originLatitude"] = route["start"]["coordinates"]["lat"]
+                        transport_mode["originLongitude"] = route["start"]["coordinates"]["lon"]
+                        transport_mode["destLatitude"] = route["legs"][route["legs"].index(leg) + 1]["stops"][0]["coordinates"]["lat"]
+                        transport_mode["destLongitude"] = route["legs"][route["legs"].index(leg) + 1]["stops"][0]["coordinates"]["lon"]
+                    # Case 3: Dest
+                    elif route["legs"].index(leg) == len(route["legs"]) - 1:
+                        transport_mode["originLatitude"] = current_route["route"][-1]["destLatitude"]
+                        transport_mode["originLongitude"] = current_route["route"][-1]["destLongitude"]
+                        transport_mode["destLatitude"] = route["end"]["coordinates"]["lat"]
+                        transport_mode["destLongitude"] = route["end"]["coordinates"]["lon"]
+                    # Case 4: Not Origin, Not Dest
+                    else:
+                        transport_mode["originLatitude"] = current_route["route"][-1]["destLatitude"]
+                        transport_mode["originLongitude"] = current_route["route"][-1]["destLongitude"]
+                        transport_mode["destLatitude"] = route["legs"][route["legs"].index(leg) + 1]["stops"][0]["coordinates"]["lat"]
+                        transport_mode["destLongitude"] = route["legs"][route["legs"].index(leg) + 1]["stops"][0]["coordinates"]["lon"]
+                else:
+                    if leg["vehicle_types"] == "metro":
+                        transport_mode["transportMode"] = "mrt"
+                        transport_mode["origin"] = leg["stops"][0]["name"]
+                        transport_mode["dest"] = leg["stops"][-1]["name"]
+                        transport_mode["originLatitude"] = leg["stops"][0]["coordinates"]["lat"]
+                        transport_mode["originLongitude"] = leg["stops"][0]["coordinates"]["lon"]
+                        transport_mode["destLatitude"] = leg["stops"][-1]["coordinates"]["lat"]
+                        transport_mode["destLongitude"] = leg["stops"][-1]["coordinates"]["lon"]
+                    else:
+                        transport_mode["transportMode"] = "bus"
+                        transport_mode["origin"] = leg["stops"][0]["name"]
+                        transport_mode["dest"] = leg["stops"][-1]["name"]
+                        transport_mode["originLatitude"] = leg["stops"][0]["coordinates"]["lat"]
+                        transport_mode["originLongitude"] = leg["stops"][0]["coordinates"]["lon"]
+                        transport_mode["destLatitude"] = leg["stops"][-1]["coordinates"]["lat"]
+                        transport_mode["destLongitude"] = leg["stops"][-1]["coordinates"]["lon"]
+
+                current_route["route"].append(transport_mode)
+            formatted_routes.append(current_route)
+        return formatted_routes
+
     def post(self):
 
         # Input Validation
@@ -62,8 +132,6 @@ class RoutesRecommender(Resource):
         departure_time = datetime.datetime.now(timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else datetime.datetime.strptime(request_data["Departure Time"], '%Y/%m/%d %H:%M:%S')
         #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
-
-        print([origin_lat, origin_lng, dest_lat, dest_lng])
 
         if self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
             return {"Message": self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
@@ -145,12 +213,10 @@ class RoutesRecommender(Resource):
     
         results.sort(key=lambda x: x["duration"])
 
+        # Adding public transport options
+        results.extend(self.find_public_transport_routes(origin_lat, origin_lng, dest_lat, dest_lng))
+
         if len(results) == 0:
             return {"Message": "Sorry there are no available drivers for your journey at the specified time"}, 200
         else:
             return {"Recommended Driver Routes": results}, 200
-
-        
-
-
-
