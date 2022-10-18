@@ -11,7 +11,7 @@ import math
 
 class RoutesRecommender(Resource):
 
-    def validate_input(origin_lat, origin_lng, dest_lat, dest_lng):
+    def validate_input(self, origin_lat, origin_lng, dest_lat, dest_lng):
         if origin_lat is None or origin_lng is None or dest_lat is None or dest_lng is None:
             return "Please indicate start and end coordinates"
         elif not isinstance(origin_lat, float) or not isinstance(origin_lng, float) or not isinstance(dest_lat, float) or not isinstance(dest_lng, float):
@@ -28,6 +28,29 @@ class RoutesRecommender(Resource):
         
         return "Ok"
 
+    def find_ride_price(self, distance, gas_type):
+
+        costs = []
+        cursor = mysql.connection.cursor()
+        sql_statement = '''select gas_type, max(price) from (select * from gas_price order by date_time desc limit 25) temp group by gas_type order by gas_type'''
+        cursor.execute(sql_statement)
+        gas_prices = cursor.fetchall()
+
+        prices = {
+            "92": gas_prices[0][1],
+            "95": gas_prices[1][1],
+            "98": gas_prices[2][1],
+            "Diesel": gas_prices[3][1],
+            "Premium": gas_prices[4][1]
+        }
+
+        average_fuel_consumption_per_litre = 15.4
+
+        for i in range(len(distance)):
+            costs.append(distance[i] / average_fuel_consumption_per_litre * float(prices[gas_type[i]]))
+
+        return costs
+
     def post(self):
 
         # Input Validation
@@ -40,8 +63,10 @@ class RoutesRecommender(Resource):
         #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
 
-        if validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
-            return {"Message": validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
+        print([origin_lat, origin_lng, dest_lat, dest_lng])
+
+        if self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
+            return {"Message": self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
 
         # Get filtered planned routes from DB
         # Filter conditions:
@@ -55,10 +80,13 @@ class RoutesRecommender(Resource):
         datetime_plus15 = departure_time + datetime.timedelta(minutes=15)
 
         cursor = mysql.connection.cursor()
-        sql_statement = '''SELECT * FROM planned_route WHERE
+
+        sql_statement = '''SELECT temp2.*, bussinuser.name FROM (SELECT temp.*, driver.fuel_type, driver.model_and_color, driver.id as driver_id FROM (SELECT * FROM planned_route WHERE
                             SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) <= 0.066569613598277
                             ORDER BY (SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) 
-                            + SQRT(POW((destLatitude-%s),2) + POW((destLongitude-%s),2))) LIMIT 5'''
+                            + SQRT(POW((destLatitude-%s),2) + POW((destLongitude-%s),2))) LIMIT 5) temp 
+                            JOIN driver ON temp.car_plate = driver.car_plate) temp2
+                            JOIN bussinuser ON temp2.driver_id = bussinuser.id'''
         # sql_statement = '''SELECT * FROM planned_route WHERE dateTime BETWEEN %s AND %s AND
         #                     SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) <= 0.066569613598277
         #                     ORDER BY (SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) 
@@ -95,6 +123,8 @@ class RoutesRecommender(Resource):
         # Rank routes based on Arrival Time
 
         travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["duration"]["text"].replace(" mins", "")) + math.ceil(1482.59902 * math.sqrt((float(x[3]) - dest_lat) ** 2 + (float(x[4]) - dest_lng) ** 2)), routes))
+        distance = travel_time = list(map(lambda x: float(timed_result[routes.index(x)]["distance"]["text"].replace(" km", "")), routes))
+        cost = self.find_ride_price(distance, [routes[i][8] for i in range(len(routes))])
 
         results = []
         for i in range(len(routes)):
@@ -107,7 +137,10 @@ class RoutesRecommender(Resource):
                 'dateTime': str(routes[i][5]),
                 'capacity': routes[i][6],
                 'carPlate': routes[i][7],
-                'duration': travel_time[i]
+                'carModel': routes[i][9],
+                'driver': routes[i][11],
+                'duration': travel_time[i],
+                'cost': cost[i]
             })
     
         results.sort(key=lambda x: x["duration"])
