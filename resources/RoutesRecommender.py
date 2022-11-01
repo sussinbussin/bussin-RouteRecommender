@@ -106,8 +106,9 @@ class RoutesRecommender(Resource):
                         transport_mode["destLatitude"] = route["legs"][route["legs"].index(leg) + 1]["stops"][0]["coordinates"]["lat"]
                         transport_mode["destLongitude"] = route["legs"][route["legs"].index(leg) + 1]["stops"][0]["coordinates"]["lon"]
                 else:
-                    if leg["vehicle_types"] == "metro":
+                    if leg["vehicle_types"][0] == "metro":
                         transport_mode["transportMode"] = "mrt"
+                        transport_mode["service"] = leg["services"][0]["name"]
                         transport_mode["origin"] = leg["stops"][0]["name"]
                         transport_mode["dest"] = leg["stops"][-1]["name"]
                         transport_mode["originLatitude"] = leg["stops"][0]["coordinates"]["lat"]
@@ -116,6 +117,7 @@ class RoutesRecommender(Resource):
                         transport_mode["destLongitude"] = leg["stops"][-1]["coordinates"]["lon"]
                     else:
                         transport_mode["transportMode"] = "bus"
+                        transport_mode["service"] = leg["services"][0]["name"]
                         transport_mode["origin"] = leg["stops"][0]["name"]
                         transport_mode["dest"] = leg["stops"][-1]["name"]
                         transport_mode["originLatitude"] = leg["stops"][0]["coordinates"]["lat"]
