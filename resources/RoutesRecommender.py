@@ -61,7 +61,13 @@ class RoutesRecommender(Resource):
         headers = {
             "Citymapper-Partner-Key": CITYMAPPER_API_KEY
         }
-        routes = requests.get(base_url, params=payload, headers=headers).json()["routes"]
+        routes = requests.get(base_url, params=payload, headers=headers).json()
+
+        # Check if there are any suggested public transport routes
+        if routes.get("routes") is None:
+            return []
+        else:
+            routes = routes["routes"]
 
         formatted_routes = []
 
