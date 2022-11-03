@@ -5,6 +5,5 @@ Flask_pymysql==0.2.3
 Flask_RESTful==0.3.9
 geopy==2.2.0
 googlemaps==4.6.0
-pytest==7.0.0
 pytz==2021.1
 requests==2.25.1

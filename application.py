@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_pymysql import MySQL
+from flask_cognito import CognitoAuth
 
 mysql = MySQL()
 cogauth = CognitoAuth()
