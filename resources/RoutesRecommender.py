@@ -1,7 +1,7 @@
+from email.mime import application
 from config import ROUTES_API_KEY, CITYMAPPER_API_KEY
 from flask_restful import Resource
 from flask import request
-# from datetime import datetime
 import datetime
 from pytz import timezone
 from geopy.geocoders import Nominatim
@@ -9,6 +9,7 @@ from application import mysql
 import googlemaps
 import math
 import requests
+from flask_cognito import cognito_auth_required
 
 class RoutesRecommender(Resource):
 
@@ -129,6 +130,7 @@ class RoutesRecommender(Resource):
             formatted_routes.append(current_route)
         return formatted_routes
 
+    @cognito_auth_required
     def post(self):
 
         # Input Validation
