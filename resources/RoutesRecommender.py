@@ -2,7 +2,7 @@ from email.mime import application
 from config import ROUTES_API_KEY, CITYMAPPER_API_KEY
 from flask_restful import Resource
 from flask import request
-import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 from geopy.geocoders import Nominatim
 from application import mysql
@@ -139,7 +139,7 @@ class RoutesRecommender(Resource):
         origin_lng = request_data.get("Origin Longitude")
         dest_lat = request_data.get("Destination Latitude")
         dest_lng = request_data.get("Destination Longitude") 
-        departure_time = datetime.datetime.now(timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else datetime.datetime.strptime(request_data["Departure Time"], '%Y/%m/%d %H:%M:%S')
+        departure_time = datetime.now(tz=timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else datetime.strptime(request_data["Departure Time"], '%Y-%m-%d %H:%M:%S')
         #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
 
@@ -155,7 +155,7 @@ class RoutesRecommender(Resource):
         # https://gis.stackexchange.com/questions/58653/what-is-approximate-error-of-pythagorean-theorem-vs-haversine-formula-in-measur
 
         #datetime_plus15 = datetime.datetime.strptime(departure_time.replace("-", "/"), '%Y/%d/%m').date() + datetime.timedelta(minutes=15)
-        datetime_plus15 = departure_time + datetime.timedelta(minutes=15)
+        datetime_plus15 = departure_time + timedelta(minutes=15)
 
         cursor = mysql.connection.cursor()
 
