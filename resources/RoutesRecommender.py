@@ -159,7 +159,7 @@ class RoutesRecommender(Resource):
 
         cursor = mysql.connection.cursor()
 
-        sql_statement = '''SELECT temp2.*, bussinuser.name FROM (SELECT temp.*, driver.fuel_type, driver.model_and_color, driver.user_id as driver_id FROM (SELECT * FROM planned_route WHERE
+        sql_statement = '''SELECT temp2.*, bussinuser.name FROM (SELECT temp.*, driver.fuel_type, driver.model_and_colour, driver.user_id as driver_id FROM (SELECT * FROM planned_route WHERE
                             SQRT(POW((origin_latitude-%s),2) + POW((origin_longitude-%s),2)) <= 0.066569613598277
                             ORDER BY (SQRT(POW((origin_latitude-%s),2) + POW((origin_longitude-%s),2)) 
                             + SQRT(POW((dest_latitude-%s),2) + POW((dest_longitude-%s),2))) LIMIT 5) temp 
