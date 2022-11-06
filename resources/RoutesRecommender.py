@@ -190,8 +190,8 @@ class RoutesRecommender(Resource):
         origins = []
         destinations = []
         for route in routes:
-            origins.append((route[1], route[2]))
-            destinations.append((route[3], route[4]))
+            origins.append((route[8], route[9]))
+            destinations.append((route[6], route[7]))
         dm_result = gmaps.distance_matrix(origins=origins, destinations=destinations, departure_time=departure_time)["rows"]
 
         timed_result = []
@@ -200,23 +200,23 @@ class RoutesRecommender(Resource):
 
         # Rank routes based on Arrival Time
 
-        travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["duration"]["text"].replace(" mins", "")) + math.ceil(1482.59902 * math.sqrt((float(x[3]) - dest_lat) ** 2 + (float(x[4]) - dest_lng) ** 2)), routes))
+        travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["duration"]["text"].replace(" mins", "")) + math.ceil(1482.59902 * math.sqrt((float(x[6]) - dest_lat) ** 2 + (float(x[7]) - dest_lng) ** 2)), routes))
         distance = travel_time = list(map(lambda x: float(timed_result[routes.index(x)]["distance"]["text"].replace(" km", "")), routes))
-        cost = self.find_ride_price(distance, [routes[i][8] for i in range(len(routes))])
+        cost = self.find_ride_price(distance, [routes[i][10] for i in range(len(routes))])
 
         results = []
         for i in range(len(routes)):
             results.append({
                 'id': routes[i][0],
-                'originLatitude': float(routes[i][1]),
-                'originLongitude': float(routes[i][2]),
-                'destLatitude': float(routes[i][3]),
-                'destLongitude': float(routes[i][4]),
+                'originLatitude': float(routes[i][8]),
+                'originLongitude': float(routes[i][9]),
+                'destLatitude': float(routes[i][6]),
+                'destLongitude': float(routes[i][7]),
                 'dateTime': str(routes[i][5]),
-                'capacity': routes[i][6],
-                'carPlate': routes[i][7],
-                'carModel': routes[i][9],
-                'driver': routes[i][11],
+                'capacity': routes[i][1],
+                'carPlate': routes[i][5],
+                'carModel': routes[i][11],
+                'driver': routes[i][13],
                 'duration': travel_time[i],
                 'cost': cost[i]
             })
