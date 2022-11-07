@@ -173,11 +173,13 @@ class RoutesRecommender(Resource):
 
         cursor.execute(sql_statement, (origin_lat, origin_lng, origin_lat, origin_lng, dest_lat, dest_lng))
         routes = cursor.fetchall()
-
+        if len(routes) == 0:
+            return {"Message": "Sorry there are no available drivers for your journey at the specified time"}, 200
         # Call Routes API to get actual arrival time (departure + travel time) and rank based on that
         # Calls:
         # - Driving (B to C)
         # - Walking (C to D)
+        
 
         gmaps = googlemaps.Client(key=ROUTES_API_KEY)
         
@@ -212,7 +214,7 @@ class RoutesRecommender(Resource):
                 'originLongitude': float(routes[i][9]),
                 'destLatitude': float(routes[i][6]),
                 'destLongitude': float(routes[i][7]),
-                'dateTime': str(routes[i][5]),
+                'dateTime': str(routes[i][2]),
                 'capacity': routes[i][1],
                 'carPlate': routes[i][5],
                 'carModel': routes[i][11],
