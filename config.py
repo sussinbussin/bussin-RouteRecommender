@@ -23,9 +23,9 @@ COGNITO_APP_CLIENT_ID = os.environ["COGNITO_APP_CLIENT_ID"]
 
 # USER = 'root'
 # # Please fill in your password
-# PASSWORD = ''
+# PASSWORD = ""
 # HOST = '127.0.0.1'
-# DATABASE = 'hewwo'
+# DATABASE = 'bussin'
 # COGNITO_REGION = ""
 # COGNITO_USERPOOL_ID =  ""
 # COGNITO_APP_CLIENT_ID = ""
