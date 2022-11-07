@@ -150,29 +150,25 @@ class RoutesRecommender(Resource):
         # Get filtered planned routes from DB
         # Filter conditions:
         # - Maximum of 15 minute minute delay between passenger journey start and driver drive start
-        # - Maximum of 10 minute walking time from passenger start to driver start, i.e. 750m, 4.5km/h walking speed
+        # - Maximum of 10 minute walking time from passenger start to driver start and from driver end to passenger end, i.e. 750m, 4.5km/h walking speed
 
         # Approximate error between Pythagoras and Havers
         # https://gis.stackexchange.com/questions/58653/what-is-approximate-error-of-pythagorean-theorem-vs-haversine-formula-in-measur
 
-        #datetime_plus15 = datetime.datetime.strptime(departure_time.replace("-", "/"), '%Y/%d/%m').date() + datetime.timedelta(minutes=15)
         datetime_plus15 = departure_time + timedelta(minutes=15)
 
         cursor = mysql.connection.cursor()
 
         sql_statement = '''SELECT temp2.*, bussinuser.name FROM (SELECT temp.*, driver.fuel_type, driver.model_and_colour, driver.user_id as driver_id FROM (SELECT * FROM planned_route WHERE
-                            SQRT(POW((origin_latitude-%s),2) + POW((origin_longitude-%s),2)) <= 0.066569613598277
+                            date_time BETWEEN %s AND %s AND
+                            SQRT(POW((origin_latitude-%s),2) + POW((origin_longitude-%s),2)) <= 0.066569613598277 AND
+                            SQRT(POW((dest_latitude-%s),2) + POW((dest_longitude-%s),2)) <= 0.066569613598277
                             ORDER BY (SQRT(POW((origin_latitude-%s),2) + POW((origin_longitude-%s),2)) 
                             + SQRT(POW((dest_latitude-%s),2) + POW((dest_longitude-%s),2))) LIMIT 5) temp 
                             JOIN driver ON temp.car_plate = driver.car_plate) temp2
                             JOIN bussinuser ON temp2.driver_id = bussinuser.id'''
-        # sql_statement = '''SELECT * FROM planned_route WHERE dateTime BETWEEN %s AND %s AND
-        #                     SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) <= 0.066569613598277
-        #                     ORDER BY (SQRT(POW((originLatitude-%s),2) + POW((originLongitude-%s),2)) 
-        #                     + SQRT(POW((destLatitude-%s),2) + POW((destLongitude-%s),2))) LIMIT 5'''
-        # cursor.execute(sql_statement, (str(departure_time).split(".")[0], str(datetime_plus15.strftime('%Y/%m/%d %H:%M:%S')).split(".")[0], origin_lat, origin_lng, origin_lat, origin_lng, dest_lat, dest_lng))
 
-        cursor.execute(sql_statement, (origin_lat, origin_lng, origin_lat, origin_lng, dest_lat, dest_lng))
+        cursor.execute(sql_statement, (departure_time, datetime_plus15, origin_lat, origin_lng, dest_lat, dest_lng, origin_lat, origin_lng, dest_lat, dest_lng))
         routes = cursor.fetchall()
 
         results = []
