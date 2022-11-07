@@ -17,3 +17,15 @@ COGNITO_APP_CLIENT_ID = os.environ["COGNITO_APP_CLIENT_ID"]
 # Deployment instructions
 # https://dev.to/aws-builders/dockerize-an-api-based-flask-app-and-deploy-on-amazon-ecs-2pk0
 
+# ROUTES_API_KEY = ""
+
+# CITYMAPPER_API_KEY = ""
+
+# USER = 'root'
+# # Please fill in your password
+# PASSWORD = ""
+# HOST = '127.0.0.1'
+# DATABASE = 'bussin'
+# COGNITO_REGION = ""
+# COGNITO_USERPOOL_ID =  ""
+# COGNITO_APP_CLIENT_ID = ""

@@ -53,17 +53,19 @@ class RoutesRecommender(Resource):
 
         return costs
 
-    def find_public_transport_routes(self, origin_lat, origin_lng, dest_lat, dest_lng):
+    def find_public_transport_routes(self, origin_lat, origin_lng, dest_lat, dest_lng, departure_time):
         base_url = "https://api.external.citymapper.com/api/1/directions/transit"
         payload = {
             "start": str(origin_lat)+","+str(origin_lng), 
-            "end":str(dest_lat)+","+str(dest_lng)
+            "end":str(dest_lat)+","+str(dest_lng),
+            "time": departure_time
         }
         headers = {
             "Citymapper-Partner-Key": CITYMAPPER_API_KEY
         }
         routes = requests.get(base_url, params=payload, headers=headers).json()
-
+        print(departure_time)
+        
         # Check if there are any suggested public transport routes
         if routes.get("routes") is None:
             return []
@@ -139,12 +141,12 @@ class RoutesRecommender(Resource):
         origin_lng = request_data.get("Origin Longitude")
         dest_lat = request_data.get("Destination Latitude")
         dest_lng = request_data.get("Destination Longitude") 
-        departure_time = datetime.now(tz=timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else datetime.strptime(request_data["Departure Time"], '%Y-%m-%d %H:%M:%S')
+        departure_time = datetime.now(tz=timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else datetime.strptime(request_data["Departure Time"] + " +0800", '%Y-%m-%d %H:%M:%S %z')
         #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
 
         if self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
-            return {"Message": self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
+            return {"message": self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
 
         # Get filtered planned routes from DB
         # Filter conditions:
@@ -173,15 +175,14 @@ class RoutesRecommender(Resource):
 
         cursor.execute(sql_statement, (origin_lat, origin_lng, origin_lat, origin_lng, dest_lat, dest_lng))
         routes = cursor.fetchall()
-        if len(routes) == 0:
-            return {"Message": "Sorry there are no available drivers for your journey at the specified time"}, 200
+
+        results = []
+        if len(routes) != 0:
+            gmaps = googlemaps.Client(key=ROUTES_API_KEY)
         # Call Routes API to get actual arrival time (departure + travel time) and rank based on that
         # Calls:
         # - Driving (B to C)
         # - Walking (C to D)
-        
-
-        gmaps = googlemaps.Client(key=ROUTES_API_KEY)
         
         # if using directions, takes 2.86s
         # dm_result = []
@@ -189,46 +190,49 @@ class RoutesRecommender(Resource):
         #     dm_result.append(gmaps.directions(origin=(route[1], route[2]), destination=(route[3], route[4]), departure_time=departure_time))
 
         # using distance_matrix returns a matrix of distances; will have to take the diagonal elements
-        origins = []
-        destinations = []
-        for route in routes:
-            origins.append((route[8], route[9]))
-            destinations.append((route[6], route[7]))
-        dm_result = gmaps.distance_matrix(origins=origins, destinations=destinations, departure_time=departure_time)["rows"]
+            origins = []
+            destinations = []
+            for route in routes:
+                origins.append((route[8], route[9]))
+                destinations.append((route[6], route[7]))
+            dm_result = gmaps.distance_matrix(origins=origins, destinations=destinations, departure_time=departure_time)["rows"]
 
-        timed_result = []
-        for i in range(len(dm_result)):
-            timed_result.append(dm_result[i]["elements"][i])
+            timed_result = []
+            for i in range(len(dm_result)):
+                timed_result.append(dm_result[i]["elements"][i])
 
         # Rank routes based on Arrival Time
 
-        travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["duration"]["text"].replace(" mins", "")) + math.ceil(1482.59902 * math.sqrt((float(x[6]) - dest_lat) ** 2 + (float(x[7]) - dest_lng) ** 2)), routes))
-        distance = travel_time = list(map(lambda x: float(timed_result[routes.index(x)]["distance"]["text"].replace(" km", "")), routes))
-        cost = self.find_ride_price(distance, [routes[i][10] for i in range(len(routes))])
+            travel_time = list(map(lambda x: int(timed_result[routes.index(x)]["duration"]["text"].replace(" mins", "")) + math.ceil(1482.59902 * math.sqrt((float(x[6]) - dest_lat) ** 2 + (float(x[7]) - dest_lng) ** 2)), routes))
+            distance = travel_time = list(map(lambda x: float(timed_result[routes.index(x)]["distance"]["text"].replace(" km", "")), routes))
+            cost = self.find_ride_price(distance, [routes[i][10] for i in range(len(routes))])
 
-        results = []
-        for i in range(len(routes)):
-            results.append({
-                'id': routes[i][0],
-                'originLatitude': float(routes[i][8]),
-                'originLongitude': float(routes[i][9]),
-                'destLatitude': float(routes[i][6]),
-                'destLongitude': float(routes[i][7]),
-                'dateTime': str(routes[i][2]),
-                'capacity': routes[i][1],
-                'carPlate': routes[i][5],
-                'carModel': routes[i][11],
-                'driver': routes[i][13],
-                'duration': travel_time[i],
-                'cost': cost[i]
-            })
+            for i in range(len(routes)):
+                results.append({
+                    'id': routes[i][0],
+                    'originLatitude': float(routes[i][8]),
+                    'originLongitude': float(routes[i][9]),
+                    'destLatitude': float(routes[i][6]),
+                    'destLongitude': float(routes[i][7]),
+                    'dateTime': str(routes[i][2]),
+                    'capacity': routes[i][1],
+                    'carPlate': routes[i][5],
+                    'carModel': routes[i][11],
+                    'driver': routes[i][13],
+                    'duration': travel_time[i],
+                    'cost': cost[i]
+                })
     
-        results.sort(key=lambda x: x["duration"])
+            results.sort(key=lambda x: x["duration"])
 
         # Adding public transport options
-        results.extend(self.find_public_transport_routes(origin_lat, origin_lng, dest_lat, dest_lng))
+        public_transport_routes = self.find_public_transport_routes(origin_lat, origin_lng, dest_lat, dest_lng, departure_time)
+        if len(results) == 0:
+            results = public_transport_routes
+        else:
+            results.extend(public_transport_routes)
 
         if len(results) == 0:
-            return {"Message": "Sorry there are no available drivers for your journey at the specified time"}, 200
+            return {"message": "Sorry there are no available drivers or public transport for your journey at the specified time"}, 200
         else:
             return {"Recommended Driver Routes": results}, 200
