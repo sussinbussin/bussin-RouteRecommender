@@ -59,10 +59,11 @@ def test_no_drivers(client):
         "Origin Latitude": 1.360667401301699,
         "Origin Longitude": 103.75979302111537,
         "Destination Latitude": 1.3383543164477725, 
-        "Destination Longitude": 103.69662916275708
+        "Destination Longitude": 103.69662916275708,
+        "Departure Time": "2022-11-11 11:11:11"
     }, headers=headers)
     assert response.status_code == 200
-    assert response.json["Recommended Driver Routes"][0].get("id") is None
+    assert response.json["Recommended Driver Routes"][0].get("id") is None 
 
 def test_no_public_transport_and_no_drivers(client):
     response = client.post("/v1/routes", json={

@@ -2,7 +2,7 @@ import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 # Google Maps Routes API Key
-ROUTES_API_KEY = os.environ["ROUTES_API_KEY"]
+# ROUTES_API_KEY = os.environ["ROUTES_API_KEY"]
 
 CITYMAPPER_API_KEY = os.environ["CITYMAPPER_API_KEY"]
 
