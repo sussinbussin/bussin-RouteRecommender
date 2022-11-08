@@ -141,9 +141,7 @@ class RoutesRecommender(Resource):
         dest_lat = request_data.get("Destination Latitude")
         dest_lng = request_data.get("Destination Longitude") 
         departure_time = datetime.now(tz=timezone("Asia/Singapore")) if request_data.get("Departure Time") is None else datetime.strptime(request_data["Departure Time"] + " +0800", '%Y-%m-%d %H:%M:%S %z')
-        #departure_time = datetime.date.today().strftime('%Y-%d-%m') if request_data.get("Departure Time") is None else request_data["Departure Time"]
         priority_type = "Arrival Time" if request_data.get("Priority Type") is None else request_data["Priority Type"]
-
         if self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng) != "Ok":
             return {"message": self.validate_input(origin_lat, origin_lng, dest_lat, dest_lng)}, 400
 
@@ -155,7 +153,8 @@ class RoutesRecommender(Resource):
         # Approximate error between Pythagoras and Havers
         # https://gis.stackexchange.com/questions/58653/what-is-approximate-error-of-pythagorean-theorem-vs-haversine-formula-in-measur
 
-        datetime_plus15 = departure_time + timedelta(minutes=15)
+        datetime_plus15 = departure_time + timedelta(minutes=15) - timedelta(hours=8)
+        print(datetime_plus15)
 
         cursor = mysql.connection.cursor()
 
@@ -168,7 +167,7 @@ class RoutesRecommender(Resource):
                             JOIN driver ON temp.car_plate = driver.car_plate) temp2
                             JOIN bussinuser ON temp2.driver_id = bussinuser.id'''
 
-        cursor.execute(sql_statement, (departure_time, datetime_plus15, origin_lat, origin_lng, dest_lat, dest_lng, origin_lat, origin_lng, dest_lat, dest_lng))
+        cursor.execute(sql_statement, (departure_time - timedelta(hours=8), datetime_plus15, origin_lat, origin_lng, dest_lat, dest_lng, origin_lat, origin_lng, dest_lat, dest_lng))
         routes = cursor.fetchall()
 
         results = []
